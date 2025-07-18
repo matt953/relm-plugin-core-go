@@ -20,6 +20,10 @@ type StoragePlugin interface {
 
 	// ProviderName returns a human-readable name for this storage provider
 	ProviderName() string
+
+	// Cleanup performs any necessary cleanup when the plugin is being unloaded
+	// This is optional - plugins can implement this to clean up resources
+	Cleanup() error
 }
 
 // Global variable to hold the registered plugin instance

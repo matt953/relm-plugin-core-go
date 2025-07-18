@@ -200,5 +200,16 @@ func init_plugin() C.bool {
 	return C.bool(plugin != nil)
 }
 
+//export cleanup_plugin
+func cleanup_plugin() C.bool {
+	plugin := GetRegisteredPlugin()
+	if plugin == nil {
+		return C.bool(false)
+	}
+	
+	err := plugin.Cleanup()
+	return C.bool(err == nil)
+}
+
 // Required for CGO exports
 func main() {}

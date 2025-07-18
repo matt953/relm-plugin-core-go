@@ -15,6 +15,8 @@ typedef struct {
 */
 import "C"
 import (
+	"runtime"
+	"runtime/debug"
 	"unsafe"
 )
 
@@ -50,7 +52,7 @@ func newSuccessResult(data []byte) C.FFIResult {
 		// Allocate C memory for data
 		result.data = (*C.uint8_t)(C.malloc(C.size_t(len(data))))
 		result.data_len = C.size_t(len(data))
-		
+
 		// Copy Go data to C memory
 		C.memcpy(unsafe.Pointer(result.data), unsafe.Pointer(&data[0]), result.data_len)
 	} else {
@@ -98,7 +100,7 @@ func store_file_with_content_type(path *C.char, data *C.uint8_t, length C.size_t
 
 	goPath := goString(path)
 	goData := goBytes(data, length)
-	
+
 	var goContentType *string
 	if contentType != nil {
 		ct := goString(contentType)
@@ -126,7 +128,7 @@ func retrieve_file(path *C.char) C.FFIResult {
 	}
 
 	goPath := goString(path)
-	
+
 	data, err := plugin.RetrieveFile(goPath)
 	if err != nil {
 		return newErrorResult(err.Error())
@@ -143,7 +145,7 @@ func delete_file(path *C.char) C.FFIResult {
 	}
 
 	goPath := goString(path)
-	
+
 	err := plugin.DeleteFile(goPath)
 	if err != nil {
 		return newErrorResult(err.Error())
@@ -173,7 +175,7 @@ func generate_file_url(path *C.char, baseURL *C.char) *C.char {
 
 	goPath := goString(path)
 	goBaseURL := goString(baseURL)
-	
+
 	url := plugin.GenerateURL(goPath, goBaseURL)
 	if url == nil {
 		return nil
@@ -202,13 +204,28 @@ func init_plugin() C.bool {
 
 //export cleanup_plugin
 func cleanup_plugin() C.bool {
+	// Add debug logging to see if this is being called
+	println("cleanup_plugin called")
+
 	plugin := GetRegisteredPlugin()
 	if plugin == nil {
+		println("cleanup_plugin: no plugin registered")
 		return C.bool(false)
 	}
-	
+
 	err := plugin.Cleanup()
-	return C.bool(err == nil)
+	if err != nil {
+		println("cleanup_plugin: plugin cleanup failed:", err.Error())
+		return C.bool(false)
+	}
+
+	// Force garbage collection to clean up any remaining resources
+	runtime.GC()
+	debug.FreeOSMemory()
+
+	println("cleanup_plugin: completed successfully")
+
+	return C.bool(true)
 }
 
 // Required for CGO exports

@@ -25,14 +25,33 @@ type StoragePlugin interface {
 // Global variable to hold the registered plugin instance
 var registeredPlugin StoragePlugin
 
+// Plugin initializer callback function type
+type PluginInitializer func() (StoragePlugin, error)
+
+// Global plugin initializer callback
+var pluginInitializer PluginInitializer
+
 // RegisterPlugin registers a storage plugin for FFI export
 // This must be called from the plugin's main function
 func RegisterPlugin(plugin StoragePlugin) {
 	registeredPlugin = plugin
 }
 
+// SetPluginInitializer sets the callback function for lazy plugin initialization
+// This should be called from the plugin's main package
+func SetPluginInitializer(initializer PluginInitializer) {
+	pluginInitializer = initializer
+}
+
 // GetRegisteredPlugin returns the currently registered plugin
 // Used internally by FFI functions
 func GetRegisteredPlugin() StoragePlugin {
+	// If no plugin is registered but we have an initializer, try to initialize
+	if registeredPlugin == nil && pluginInitializer != nil {
+		plugin, err := pluginInitializer()
+		if err == nil && plugin != nil {
+			RegisterPlugin(plugin)
+		}
+	}
 	return registeredPlugin
 }

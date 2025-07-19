@@ -1,5 +1,9 @@
 package storage
 
+import (
+	"github.com/matt953/relm-plugin-core-go/config"
+)
+
 // StoragePlugin defines the interface that all storage plugins must implement
 type StoragePlugin interface {
 	// StoreFile stores data at the specified path with optional content type
@@ -52,6 +56,10 @@ func SetPluginInitializer(initializer PluginInitializer) {
 func GetRegisteredPlugin() StoragePlugin {
 	// If no plugin is registered but we have an initializer, try to initialize
 	if registeredPlugin == nil && pluginInitializer != nil {
+		// Load configuration and set environment variables for storage plugins
+		// This happens automatically before plugin initialization
+		config.LoadConfigAndSetEnvVars("storage")
+		
 		plugin, err := pluginInitializer()
 		if err == nil && plugin != nil {
 			RegisterPlugin(plugin)

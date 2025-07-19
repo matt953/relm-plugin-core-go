@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/matt953/relm-plugin-client-go/types"
+	"github.com/matt953/relm-types-go/types"
 )
 
-// Re-export Environment from the client library to avoid duplication
+// Re-export Environment from the types library to avoid duplication
 type Environment = types.Environment
 
 // GeneralPlugin defines the interface for general-purpose plugins

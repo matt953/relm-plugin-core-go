@@ -15,24 +15,17 @@ type PluginConfigItem struct {
 	Value string `yaml:"value"`
 }
 
-// PluginConfig represents plugin configuration
-type PluginConfig struct {
+// PluginDefinition represents a single plugin definition
+type PluginDefinition struct {
+	Type    string             `yaml:"type"`
 	Enabled bool               `yaml:"enabled"`
 	Path    string             `yaml:"path"`
 	Config  []PluginConfigItem `yaml:"config"`
 }
 
-// FFIPlugins represents the ffi plugins section
-type FFIPlugins map[string]PluginConfig
-
-// PluginsConfig represents the plugins section
-type PluginsConfig struct {
-	FFI FFIPlugins `yaml:"ffi"`
-}
-
 // RealmConfig represents the full realm configuration
 type RealmConfig struct {
-	Plugins PluginsConfig `yaml:"plugins"`
+	Plugins []PluginDefinition `yaml:"plugins"` // Array-based format (all plugins are FFI)
 }
 
 // LoadConfigAndSetEnvVars loads the YAML config and sets environment variables for the specified plugin type
@@ -80,13 +73,18 @@ func LoadConfigAndSetEnvVars(pluginType string) error {
 		return fmt.Errorf("failed to parse YAML config: %v", err)
 	}
 
-	// Set environment variables for the specific plugin type
-	if pluginConfig, exists := config.Plugins.FFI[pluginType]; exists {
-		for _, configItem := range pluginConfig.Config {
-			envVarName := fmt.Sprintf("%s_%s", strings.ToUpper(pluginType), strings.ToUpper(configItem.Name))
-			// Only set if not already set (allow env vars to override config file)
-			if os.Getenv(envVarName) == "" {
-				os.Setenv(envVarName, configItem.Value)
+	// Set environment variables for the specific plugin type from array format
+	if config.Plugins != nil {
+		for _, plugin := range config.Plugins {
+			if strings.EqualFold(plugin.Type, pluginType) {
+				for _, configItem := range plugin.Config {
+					envVarName := fmt.Sprintf("%s_%s", strings.ToUpper(pluginType), strings.ToUpper(configItem.Name))
+					// Only set if not already set (allow env vars to override config file)
+					if os.Getenv(envVarName) == "" {
+						os.Setenv(envVarName, configItem.Value)
+					}
+				}
+				break // Found the plugin, no need to continue
 			}
 		}
 	}

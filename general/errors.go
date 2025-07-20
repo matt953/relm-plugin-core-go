@@ -100,11 +100,13 @@ var (
 // to proper error returns.
 //
 // Parameters:
-//   callbackName - Name of the callback for logging
-//   callback - The callback function to execute
+//
+//	callbackName - Name of the callback for logging
+//	callback - The callback function to execute
 //
 // Returns:
-//   true if the callback succeeded, false otherwise
+//
+//	true if the callback succeeded, false otherwise
 //
 // Example:
 //
@@ -115,7 +117,7 @@ var (
 //	        if err := json.Unmarshal([]byte(environmentJSON), &env); err != nil {
 //	            return false
 //	        }
-//	        
+//
 //	        // Process the environment
 //	        return p.processEnvironment(&env)
 //	    })

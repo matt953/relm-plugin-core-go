@@ -2,6 +2,7 @@ package general
 
 /*
 #include <stdlib.h>
+#include <stdbool.h>
 */
 import "C"
 
@@ -10,7 +11,7 @@ import (
 	"fmt"
 	"sync"
 	"unsafe"
-	
+
 	"github.com/matt953/relm-plugin-core-go/config"
 )
 
@@ -19,7 +20,26 @@ var (
 	pluginMutex    sync.RWMutex
 	isInitialized  bool
 	pluginName     string
+	globalConfig   map[string]interface{}
 )
+
+// SetConfigFromJSON sets the global config from JSON string
+func SetConfigFromJSON(configJSON string) error {
+	if configJSON == "" {
+		return fmt.Errorf("empty config JSON")
+	}
+
+	if err := json.Unmarshal([]byte(configJSON), &globalConfig); err != nil {
+		return fmt.Errorf("failed to parse config JSON: %v", err)
+	}
+
+	return nil
+}
+
+// GetConfig returns the global config
+func GetConfig() map[string]interface{} {
+	return globalConfig
+}
 
 // ExportPlugin registers a GeneralPlugin implementation for FFI export
 //
@@ -34,13 +54,14 @@ var (
 //	}
 //
 // Parameters:
-//   plugin - The GeneralPlugin implementation to export
+//
+//	plugin - The GeneralPlugin implementation to export
 func ExportPlugin(plugin GeneralPlugin) {
 	pluginMutex.Lock()
 	defer pluginMutex.Unlock()
-	
+
 	pluginInstance = plugin
-	fmt.Printf("General plugin exported: %s v%s\n", 
+	fmt.Printf("General plugin exported: %s v%s\n",
 		plugin.GetPluginName(), plugin.GetPluginVersion())
 }
 
@@ -69,25 +90,60 @@ func get_plugin_version() *C.char {
 	return C.CString(plugin.GetPluginVersion())
 }
 
+//export initialize_with_config
+func initialize_with_config(configJson *C.char) C.bool {
+	configStr := C.GoString(configJson)
+
+	plugin := getPlugin()
+	if plugin == nil {
+		return C.bool(false)
+	}
+
+	pluginMutex.Lock()
+	defer pluginMutex.Unlock()
+
+	// Always set the config, regardless of initialization status
+	if err := SetConfigFromJSON(configStr); err != nil {
+		fmt.Printf("initialize_with_config: failed to set general config: %v\n", err)
+		return C.bool(false)
+	}
+	
+	if err := config.SetConfigFromJSON(configStr); err != nil {
+		fmt.Printf("initialize_with_config: failed to set global config: %v\n", err)
+		return C.bool(false)
+	}
+
+	if isInitialized {
+		return C.bool(true) // Already initialized but config is now set
+	}
+
+	success := plugin.Initialize()
+	if success {
+		isInitialized = true
+		return C.bool(true)
+	}
+	return C.bool(false)
+}
+
 //export init_plugin
 func init_plugin() C.int {
 	plugin := getPlugin()
 	if plugin == nil {
 		return 0
 	}
-	
+
 	pluginMutex.Lock()
 	defer pluginMutex.Unlock()
-	
+
 	if isInitialized {
 		return 1 // Already initialized
 	}
-	
+
 	// Load configuration for all general plugins from YAML
 	if err := config.LoadAllGeneralPluginConfigs(); err != nil {
 		fmt.Printf("Warning: Failed to load config for general plugins: %v\n", err)
 	}
-	
+
 	success := plugin.Initialize()
 	if success {
 		isInitialized = true
@@ -102,14 +158,14 @@ func cleanup_plugin() C.int {
 	if plugin == nil {
 		return 0
 	}
-	
+
 	pluginMutex.Lock()
 	defer pluginMutex.Unlock()
-	
+
 	if !isInitialized {
 		return 1 // Already cleaned up
 	}
-	
+
 	success := plugin.Cleanup()
 	if success {
 		isInitialized = false
@@ -124,19 +180,19 @@ func on_environment_created(jsonPtr *C.char) C.int {
 	if plugin == nil {
 		return 0
 	}
-	
+
 	if jsonPtr == nil {
 		return 0
 	}
-	
+
 	jsonStr := C.GoString(jsonPtr)
-	
+
 	// Parse the JSON automatically for the plugin developer
 	var environment Environment
 	if err := json.Unmarshal([]byte(jsonStr), &environment); err != nil {
 		return 0
 	}
-	
+
 	success := plugin.OnEnvironmentCreated(&environment)
 	if success {
 		return 1
@@ -150,18 +206,18 @@ func on_environment_updated(jsonPtr *C.char) C.int {
 	if plugin == nil {
 		return 0
 	}
-	
+
 	if jsonPtr == nil {
 		return 0
 	}
-	
+
 	jsonStr := C.GoString(jsonPtr)
-	
+
 	var environment Environment
 	if err := json.Unmarshal([]byte(jsonStr), &environment); err != nil {
 		return 0
 	}
-	
+
 	success := plugin.OnEnvironmentUpdated(&environment)
 	if success {
 		return 1
@@ -175,18 +231,18 @@ func on_environment_deleted(jsonPtr *C.char) C.int {
 	if plugin == nil {
 		return 0
 	}
-	
+
 	if jsonPtr == nil {
 		return 0
 	}
-	
+
 	jsonStr := C.GoString(jsonPtr)
-	
+
 	var environment Environment
 	if err := json.Unmarshal([]byte(jsonStr), &environment); err != nil {
 		return 0
 	}
-	
+
 	success := plugin.OnEnvironmentDeleted(&environment)
 	if success {
 		return 1
@@ -200,18 +256,18 @@ func on_organization_created(jsonPtr *C.char) C.int {
 	if plugin == nil {
 		return 0
 	}
-	
+
 	if jsonPtr == nil {
 		return 0
 	}
-	
+
 	jsonStr := C.GoString(jsonPtr)
-	
+
 	var organization Organization
 	if err := json.Unmarshal([]byte(jsonStr), &organization); err != nil {
 		return 0
 	}
-	
+
 	success := plugin.OnOrganizationCreated(&organization)
 	if success {
 		return 1
@@ -225,18 +281,18 @@ func on_organization_updated(jsonPtr *C.char) C.int {
 	if plugin == nil {
 		return 0
 	}
-	
+
 	if jsonPtr == nil {
 		return 0
 	}
-	
+
 	jsonStr := C.GoString(jsonPtr)
-	
+
 	var organization Organization
 	if err := json.Unmarshal([]byte(jsonStr), &organization); err != nil {
 		return 0
 	}
-	
+
 	success := plugin.OnOrganizationUpdated(&organization)
 	if success {
 		return 1
@@ -250,18 +306,18 @@ func on_organization_deleted(jsonPtr *C.char) C.int {
 	if plugin == nil {
 		return 0
 	}
-	
+
 	if jsonPtr == nil {
 		return 0
 	}
-	
+
 	jsonStr := C.GoString(jsonPtr)
-	
+
 	var organization Organization
 	if err := json.Unmarshal([]byte(jsonStr), &organization); err != nil {
 		return 0
 	}
-	
+
 	success := plugin.OnOrganizationDeleted(&organization)
 	if success {
 		return 1

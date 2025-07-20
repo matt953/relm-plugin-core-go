@@ -13,7 +13,7 @@ type PluginConfigItem = types.PluginConfigItem
 type PluginDefinition = types.PluginDefinition
 type RealmConfig = types.RealmConfig
 
-// LoadConfigAndSetEnvVars loads the YAML config and sets environment variables for the specified plugin type
+// LoadConfigAndSetEnvVars loads the JSON config and sets environment variables for the specified plugin type
 func LoadConfigAndSetEnvVars(pluginType string) error {
 	return types.LoadConfigAndSetEnvVars(pluginType)
 }
@@ -23,13 +23,13 @@ func MustLoadConfigAndSetEnvVars(pluginType string) {
 	types.MustLoadConfigAndSetEnvVars(pluginType)
 }
 
-// LoadGeneralPluginConfig loads configuration for a specific general plugin by finding it in the YAML config
+// LoadGeneralPluginConfig loads configuration for a specific general plugin by finding it in the JSON config
 // and setting environment variables with the extracted plugin name
 func LoadGeneralPluginConfig(pluginName string) error {
 	return types.LoadGeneralPluginConfig(pluginName)
 }
 
-// LoadAllGeneralPluginConfigs loads configuration for all general plugins in the YAML config
+// LoadAllGeneralPluginConfigs loads configuration for all general plugins in the JSON config
 // This is useful when a Go general plugin doesn't know its specific name but wants to load
 // environment variables for all general plugins
 func LoadAllGeneralPluginConfigs() error {
@@ -123,7 +123,7 @@ func (p *InMemoryConfigProvider) GetConfigByKey(key string) (string, bool) {
 	return "", false
 }
 
-// LoadConfigAndBuildInMemory loads the YAML config and returns in-memory config provider
+// LoadConfigAndBuildInMemory loads the JSON config and returns in-memory config provider
 func LoadConfigAndBuildInMemory() (*InMemoryConfigProvider, error) {
 	config, err := types.LoadConfigAndBuildInMemory()
 	if err != nil {

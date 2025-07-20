@@ -1,15 +1,23 @@
 # Relm Plugin Core - Go
 
-Go library for developing Relm storage plugins. This library provides the FFI bindings and interfaces needed to create Go plugins that can be loaded by the Relm Core application.
+Go library for developing Relm plugins. This library provides the FFI bindings and interfaces needed to create Go plugins that can be loaded by the Relm Core application.
 
 ## Overview
 
-This library enables Go developers to create storage plugins for Relm by providing:
+This library enables Go developers to create plugins for Relm by providing:
 
-- **StoragePlugin Interface** - Standard interface for all storage operations
+- **Plugin Interfaces** - Standard interfaces for storage and general plugins
 - **FFI Bindings** - C-compatible exports for integration with Rust core
 - **Error Handling** - Standardized error types and handling
 - **Memory Management** - Safe memory handling for FFI operations
+
+## Plugin Types
+
+### Storage Plugins
+Storage plugins provide file storage capabilities for Relm Core. Only one storage plugin can be active at a time.
+
+### General Plugins
+General plugins provide event-driven functionality and can respond to various system events. **Multiple general plugins can be loaded simultaneously**, allowing you to compose different functionalities (e.g., notifications, analytics, logging) from separate plugins.
 
 ## Usage
 

@@ -15,8 +15,6 @@ typedef struct {
 */
 import "C"
 import (
-	"encoding/json"
-	"fmt"
 	"runtime"
 	"runtime/debug"
 	"unsafe"
@@ -24,26 +22,6 @@ import (
 	"github.com/matt953/relm-plugin-core-go/config"
 )
 
-// Global config variable
-var globalConfig map[string]interface{}
-
-// SetConfigFromJSON sets the global config from JSON string
-func SetConfigFromJSON(configJSON string) error {
-	if configJSON == "" {
-		return fmt.Errorf("empty config JSON")
-	}
-	
-	if err := json.Unmarshal([]byte(configJSON), &globalConfig); err != nil {
-		return fmt.Errorf("failed to parse config JSON: %v", err)
-	}
-	
-	return nil
-}
-
-// GetConfig returns the global config
-func GetConfig() map[string]interface{} {
-	return globalConfig
-}
 
 // Helper functions for C interop
 func goString(cstr *C.char) string {
@@ -224,12 +202,7 @@ func provider_name() *C.char {
 func initialize_with_config(configJson *C.char) C.bool {
 	configStr := goString(configJson)
 	
-	// Set the global config in both storage and config packages
-	if err := SetConfigFromJSON(configStr); err != nil {
-		println("initialize_with_config: failed to set storage config:", err.Error())
-		return C.bool(false)
-	}
-	
+	// Set the global config
 	if err := config.SetConfigFromJSON(configStr); err != nil {
 		println("initialize_with_config: failed to set global config:", err.Error())
 		return C.bool(false)

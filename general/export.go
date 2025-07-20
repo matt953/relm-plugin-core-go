@@ -20,26 +20,7 @@ var (
 	pluginMutex    sync.RWMutex
 	isInitialized  bool
 	pluginName     string
-	globalConfig   map[string]interface{}
 )
-
-// SetConfigFromJSON sets the global config from JSON string
-func SetConfigFromJSON(configJSON string) error {
-	if configJSON == "" {
-		return fmt.Errorf("empty config JSON")
-	}
-
-	if err := json.Unmarshal([]byte(configJSON), &globalConfig); err != nil {
-		return fmt.Errorf("failed to parse config JSON: %v", err)
-	}
-
-	return nil
-}
-
-// GetConfig returns the global config
-func GetConfig() map[string]interface{} {
-	return globalConfig
-}
 
 // ExportPlugin registers a GeneralPlugin implementation for FFI export
 //
@@ -102,12 +83,7 @@ func initialize_with_config(configJson *C.char) C.bool {
 	pluginMutex.Lock()
 	defer pluginMutex.Unlock()
 
-	// Always set the config, regardless of initialization status
-	if err := SetConfigFromJSON(configStr); err != nil {
-		fmt.Printf("initialize_with_config: failed to set general config: %v\n", err)
-		return C.bool(false)
-	}
-	
+	// Set the global config
 	if err := config.SetConfigFromJSON(configStr); err != nil {
 		fmt.Printf("initialize_with_config: failed to set global config: %v\n", err)
 		return C.bool(false)
@@ -139,10 +115,6 @@ func init_plugin() C.int {
 		return 1 // Already initialized
 	}
 
-	// Load configuration for all general plugins from YAML
-	if err := config.LoadAllGeneralPluginConfigs(); err != nil {
-		fmt.Printf("Warning: Failed to load config for general plugins: %v\n", err)
-	}
 
 	success := plugin.Initialize()
 	if success {

@@ -10,12 +10,15 @@ import (
 	"fmt"
 	"sync"
 	"unsafe"
+	
+	"github.com/matt953/relm-plugin-core-go/config"
 )
 
 var (
 	pluginInstance GeneralPlugin
 	pluginMutex    sync.RWMutex
 	isInitialized  bool
+	pluginName     string
 )
 
 // ExportPlugin registers a GeneralPlugin implementation for FFI export
@@ -78,6 +81,11 @@ func init_plugin() C.int {
 	
 	if isInitialized {
 		return 1 // Already initialized
+	}
+	
+	// Load configuration for all general plugins from YAML
+	if err := config.LoadAllGeneralPluginConfigs(); err != nil {
+		fmt.Printf("Warning: Failed to load config for general plugins: %v\n", err)
 	}
 	
 	success := plugin.Initialize()

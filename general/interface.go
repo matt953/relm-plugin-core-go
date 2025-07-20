@@ -7,8 +7,9 @@ import (
 	"github.com/matt953/relm-types-go/types"
 )
 
-// Re-export Environment from the types library to avoid duplication
+// Re-export types from the types library to avoid duplication
 type Environment = types.Environment
+type Organization = types.Organization
 
 // GeneralPlugin defines the interface for general-purpose plugins
 // that handle various events and callbacks.
@@ -44,6 +45,56 @@ type GeneralPlugin interface {
 	//   true if the callback was processed successfully
 	//   false if there was a processing error
 	OnEnvironmentCreated(environment *Environment) bool
+
+	// OnEnvironmentUpdated is called when an environment is updated
+	//
+	// Parameters:
+	//   environment - The updated environment data
+	//
+	// Returns:
+	//   true if the callback was processed successfully
+	//   false if there was a processing error
+	OnEnvironmentUpdated(environment *Environment) bool
+
+	// OnEnvironmentDeleted is called when an environment is deleted
+	//
+	// Parameters:
+	//   environment - The environment data before deletion
+	//
+	// Returns:
+	//   true if the callback was processed successfully
+	//   false if there was a processing error
+	OnEnvironmentDeleted(environment *Environment) bool
+
+	// OnOrganizationCreated is called when a new organization is created
+	//
+	// Parameters:
+	//   organization - The parsed organization data
+	//
+	// Returns:
+	//   true if the callback was processed successfully
+	//   false if there was a processing error
+	OnOrganizationCreated(organization *Organization) bool
+
+	// OnOrganizationUpdated is called when an organization is updated
+	//
+	// Parameters:
+	//   organization - The updated organization data
+	//
+	// Returns:
+	//   true if the callback was processed successfully
+	//   false if there was a processing error
+	OnOrganizationUpdated(organization *Organization) bool
+
+	// OnOrganizationDeleted is called when an organization is deleted
+	//
+	// Parameters:
+	//   organization - The organization data before deletion
+	//
+	// Returns:
+	//   true if the callback was processed successfully
+	//   false if there was a processing error
+	OnOrganizationDeleted(organization *Organization) bool
 }
 
 // CallPluginCallback is a helper function to call a plugin callback with serialized data

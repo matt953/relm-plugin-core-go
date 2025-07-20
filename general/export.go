@@ -144,6 +144,131 @@ func on_environment_created(jsonPtr *C.char) C.int {
 	return 0
 }
 
+//export on_environment_updated
+func on_environment_updated(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+	
+	if jsonPtr == nil {
+		return 0
+	}
+	
+	jsonStr := C.GoString(jsonPtr)
+	
+	var environment Environment
+	if err := json.Unmarshal([]byte(jsonStr), &environment); err != nil {
+		return 0
+	}
+	
+	success := plugin.OnEnvironmentUpdated(&environment)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_environment_deleted
+func on_environment_deleted(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+	
+	if jsonPtr == nil {
+		return 0
+	}
+	
+	jsonStr := C.GoString(jsonPtr)
+	
+	var environment Environment
+	if err := json.Unmarshal([]byte(jsonStr), &environment); err != nil {
+		return 0
+	}
+	
+	success := plugin.OnEnvironmentDeleted(&environment)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_organization_created
+func on_organization_created(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+	
+	if jsonPtr == nil {
+		return 0
+	}
+	
+	jsonStr := C.GoString(jsonPtr)
+	
+	var organization Organization
+	if err := json.Unmarshal([]byte(jsonStr), &organization); err != nil {
+		return 0
+	}
+	
+	success := plugin.OnOrganizationCreated(&organization)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_organization_updated
+func on_organization_updated(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+	
+	if jsonPtr == nil {
+		return 0
+	}
+	
+	jsonStr := C.GoString(jsonPtr)
+	
+	var organization Organization
+	if err := json.Unmarshal([]byte(jsonStr), &organization); err != nil {
+		return 0
+	}
+	
+	success := plugin.OnOrganizationUpdated(&organization)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_organization_deleted
+func on_organization_deleted(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+	
+	if jsonPtr == nil {
+		return 0
+	}
+	
+	jsonStr := C.GoString(jsonPtr)
+	
+	var organization Organization
+	if err := json.Unmarshal([]byte(jsonStr), &organization); err != nil {
+		return 0
+	}
+	
+	success := plugin.OnOrganizationDeleted(&organization)
+	if success {
+		return 1
+	}
+	return 0
+}
+
 //export free_string
 func free_string(ptr *C.char) {
 	if ptr != nil {

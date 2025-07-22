@@ -136,8 +136,8 @@ func check_user_access(userID, resource, action *C.char) C.FFIResult {
 	return newSuccessJSONResult(allowed)
 }
 
-//export get_user_permissions
-func get_user_permissions(userID *C.char) C.FFIResult {
+//export create_user
+func create_user(userID *C.char) C.FFIResult {
 	defer func() {
 		if r := recover(); r != nil {
 			debug.PrintStack()
@@ -154,7 +154,7 @@ func get_user_permissions(userID *C.char) C.FFIResult {
 	}
 
 	userIDStr := goString(userID)
-	permissions, err := plugin.GetUserPermissions(userIDStr)
+	permissions, err := plugin.CreateUser(userIDStr)
 	if err != nil {
 		return newErrorResult("Failed to get user permissions: " + err.Error())
 	}

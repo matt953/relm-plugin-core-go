@@ -7,8 +7,8 @@ type AuthPlugin interface {
 	// CheckUserAccess checks if a user has permission to perform an action on a resource
 	CheckUserAccess(userID, resource, action string) (bool, error)
 
-	// GetUserPermissions retrieves detailed permissions for a user
-	GetUserPermissions(userID string) (*types.UserPermissions, error)
+	// CreateUser retrieves detailed permissions for a user
+	CreateUser(userID string) (*types.UserPermissions, error)
 
 	// GetUserDetails retrieves user profile/details information
 	GetUserDetails(userID string) (*types.UserDetails, error)
@@ -46,8 +46,8 @@ type AuthPluginWithContext interface {
 	// CheckUserAccessWithContext checks user access with additional context
 	CheckUserAccessWithContext(userID, resource, action string, context *AuthContext) (bool, error)
 
-	// GetUserPermissionsWithContext gets user permissions with additional context
-	GetUserPermissionsWithContext(userID string, context *AuthContext) (*types.UserPermissions, error)
+	// CreateUserWithContext gets user permissions with additional context
+	CreateUserWithContext(userID string, context *AuthContext) (*types.UserPermissions, error)
 }
 
 // AuthContext provides additional context for authentication operations

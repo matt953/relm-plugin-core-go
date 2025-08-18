@@ -297,6 +297,323 @@ func on_organization_deleted(jsonPtr *C.char) C.int {
 	return 0
 }
 
+//export on_user_created
+func on_user_created(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var user User
+	if err := json.Unmarshal([]byte(jsonStr), &user); err != nil {
+		return 0
+	}
+
+	success := plugin.OnUserCreated(&user)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_user_updated
+func on_user_updated(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var user User
+	if err := json.Unmarshal([]byte(jsonStr), &user); err != nil {
+		return 0
+	}
+
+	success := plugin.OnUserUpdated(&user)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_user_deleted
+func on_user_deleted(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var user User
+	if err := json.Unmarshal([]byte(jsonStr), &user); err != nil {
+		return 0
+	}
+
+	success := plugin.OnUserDeleted(&user)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_user_assigned_to_organization
+func on_user_assigned_to_organization(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var params struct {
+		UserID string `json:"user_id"`
+		OrgID  string `json:"org_id"`
+	}
+	if err := json.Unmarshal([]byte(jsonStr), &params); err != nil {
+		return 0
+	}
+
+	success := plugin.OnUserAssignedToOrganization(params.UserID, params.OrgID)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_user_removed_from_organization
+func on_user_removed_from_organization(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var params struct {
+		UserID string `json:"user_id"`
+		OrgID  string `json:"org_id"`
+	}
+	if err := json.Unmarshal([]byte(jsonStr), &params); err != nil {
+		return 0
+	}
+
+	success := plugin.OnUserRemovedFromOrganization(params.UserID, params.OrgID)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_user_assigned_to_environment
+func on_user_assigned_to_environment(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var params struct {
+		UserID string `json:"user_id"`
+		EnvID  string `json:"env_id"`
+	}
+	if err := json.Unmarshal([]byte(jsonStr), &params); err != nil {
+		return 0
+	}
+
+	success := plugin.OnUserAssignedToEnvironment(params.UserID, params.EnvID)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_user_removed_from_environment
+func on_user_removed_from_environment(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var params struct {
+		UserID string `json:"user_id"`
+		EnvID  string `json:"env_id"`
+	}
+	if err := json.Unmarshal([]byte(jsonStr), &params); err != nil {
+		return 0
+	}
+
+	success := plugin.OnUserRemovedFromEnvironment(params.UserID, params.EnvID)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_user_avatar_uploaded
+func on_user_avatar_uploaded(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var params struct {
+		UserID string `json:"user_id"`
+		FileID string `json:"file_id"`
+	}
+	if err := json.Unmarshal([]byte(jsonStr), &params); err != nil {
+		return 0
+	}
+
+	success := plugin.OnUserAvatarUploaded(params.UserID, params.FileID)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+// OAuth Client Callback FFI Functions
+
+//export on_oauth_client_created
+func on_oauth_client_created(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var event OAuthClientCreatedEvent
+	if err := json.Unmarshal([]byte(jsonStr), &event); err != nil {
+		return 0
+	}
+
+	success := plugin.OnOAuthClientCreated(&event)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_oauth_client_updated
+func on_oauth_client_updated(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var event OAuthClientUpdatedEvent
+	if err := json.Unmarshal([]byte(jsonStr), &event); err != nil {
+		return 0
+	}
+
+	success := plugin.OnOAuthClientUpdated(&event)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_oauth_client_deleted
+func on_oauth_client_deleted(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var event OAuthClientDeletedEvent
+	if err := json.Unmarshal([]byte(jsonStr), &event); err != nil {
+		return 0
+	}
+
+	success := plugin.OnOAuthClientDeleted(&event)
+	if success {
+		return 1
+	}
+	return 0
+}
+
+//export on_user_client_authorization_revoked
+func on_user_client_authorization_revoked(jsonPtr *C.char) C.int {
+	plugin := getPlugin()
+	if plugin == nil {
+		return 0
+	}
+
+	if jsonPtr == nil {
+		return 0
+	}
+
+	jsonStr := C.GoString(jsonPtr)
+
+	var event UserClientAuthorizationRevokedEvent
+	if err := json.Unmarshal([]byte(jsonStr), &event); err != nil {
+		return 0
+	}
+
+	success := plugin.OnUserClientAuthorizationRevoked(&event)
+	if success {
+		return 1
+	}
+	return 0
+}
+
 //export free_string
 func free_string(ptr *C.char) {
 	if ptr != nil {

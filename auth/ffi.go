@@ -21,6 +21,7 @@ import (
 	"unsafe"
 
 	"github.com/matt953/relm-plugin-core-go/config"
+	"github.com/matt953/relm-types-go/types"
 )
 
 // Helper functions for C interop
@@ -137,7 +138,7 @@ func check_user_access(userID, resource, action *C.char) C.FFIResult {
 }
 
 //export create_user
-func create_user(userID *C.char) C.FFIResult {
+func create_user(request *C.char) C.FFIResult {
 	defer func() {
 		if r := recover(); r != nil {
 			debug.PrintStack()
@@ -149,17 +150,23 @@ func create_user(userID *C.char) C.FFIResult {
 		return newErrorResult("No plugin registered")
 	}
 
-	if userID == nil {
-		return newErrorResult("userID cannot be null")
+	if request == nil {
+		return newErrorResult("request cannot be null")
 	}
 
-	userIDStr := goString(userID)
-	permissions, err := plugin.CreateUser(userIDStr)
+	requestStr := goString(request)
+
+	var createRequest types.CreateUserRequest
+	if err := json.Unmarshal([]byte(requestStr), &createRequest); err != nil {
+		return newErrorResult("Failed to parse request JSON: " + err.Error())
+	}
+
+	userDetails, err := plugin.CreateUser(createRequest)
 	if err != nil {
-		return newErrorResult("Failed to get user permissions: " + err.Error())
+		return newErrorResult("Failed to create user: " + err.Error())
 	}
 
-	return newSuccessJSONResult(permissions)
+	return newSuccessJSONResult(userDetails)
 }
 
 //export get_user_details
@@ -183,6 +190,32 @@ func get_user_details(userID *C.char) C.FFIResult {
 	details, err := plugin.GetUserDetails(userIDStr)
 	if err != nil {
 		return newErrorResult("Failed to get user details: " + err.Error())
+	}
+
+	return newSuccessJSONResult(details)
+}
+
+//export get_user_details_by_email
+func get_user_details_by_email(email *C.char) C.FFIResult {
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+		}
+	}()
+
+	plugin := GetRegisteredPlugin()
+	if plugin == nil {
+		return newErrorResult("No plugin registered")
+	}
+
+	if email == nil {
+		return newErrorResult("email cannot be null")
+	}
+
+	emailStr := goString(email)
+	details, err := plugin.GetUserDetailsByEmail(emailStr)
+	if err != nil {
+		return newErrorResult("Failed to get user details by email: " + err.Error())
 	}
 
 	return newSuccessJSONResult(details)
@@ -316,6 +349,32 @@ func search_users(query *C.char, limit C.size_t) C.FFIResult {
 	return newSuccessJSONResult(users)
 }
 
+//export delete_user
+func delete_user(userID *C.char) C.FFIResult {
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+		}
+	}()
+
+	plugin := GetRegisteredPlugin()
+	if plugin == nil {
+		return newErrorResult("No plugin registered")
+	}
+
+	if userID == nil {
+		return newErrorResult("userID cannot be null")
+	}
+
+	userIDStr := goString(userID)
+	err := plugin.DeleteUser(userIDStr)
+	if err != nil {
+		return newErrorResult("Failed to delete user: " + err.Error())
+	}
+
+	return newSuccessEmptyResult()
+}
+
 //export cleanup_plugin
 func cleanup_plugin() bool {
 	defer func() {
@@ -331,6 +390,209 @@ func cleanup_plugin() bool {
 
 	err := plugin.Cleanup()
 	return err == nil
+}
+
+// OAuth Client Management FFI exports
+
+//export create_oauth_client
+func create_oauth_client(request *C.char) C.FFIResult {
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+		}
+	}()
+
+	plugin := GetRegisteredPlugin()
+	if plugin == nil {
+		return newErrorResult("No plugin registered")
+	}
+
+	if request == nil {
+		return newErrorResult("request cannot be null")
+	}
+
+	requestStr := goString(request)
+
+	var createRequest types.CreateOAuthClientRequest
+	if err := json.Unmarshal([]byte(requestStr), &createRequest); err != nil {
+		return newErrorResult("Failed to parse request JSON: " + err.Error())
+	}
+
+	client, err := plugin.CreateOAuthClient(createRequest)
+	if err != nil {
+		return newErrorResult("Failed to create OAuth client: " + err.Error())
+	}
+
+	return newSuccessJSONResult(client)
+}
+
+//export get_oauth_client
+func get_oauth_client(clientID *C.char) C.FFIResult {
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+		}
+	}()
+
+	plugin := GetRegisteredPlugin()
+	if plugin == nil {
+		return newErrorResult("No plugin registered")
+	}
+
+	if clientID == nil {
+		return newErrorResult("clientID cannot be null")
+	}
+
+	clientIDStr := goString(clientID)
+	client, err := plugin.GetOAuthClient(clientIDStr)
+	if err != nil {
+		return newErrorResult("Failed to get OAuth client: " + err.Error())
+	}
+
+	return newSuccessJSONResult(client)
+}
+
+//export update_oauth_client
+func update_oauth_client(clientID, request *C.char) C.FFIResult {
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+		}
+	}()
+
+	plugin := GetRegisteredPlugin()
+	if plugin == nil {
+		return newErrorResult("No plugin registered")
+	}
+
+	if clientID == nil || request == nil {
+		return newErrorResult("clientID and request cannot be null")
+	}
+
+	clientIDStr := goString(clientID)
+	requestStr := goString(request)
+
+	var updateRequest types.UpdateOAuthClientRequest
+	if err := json.Unmarshal([]byte(requestStr), &updateRequest); err != nil {
+		return newErrorResult("Failed to parse request JSON: " + err.Error())
+	}
+
+	client, err := plugin.UpdateOAuthClient(clientIDStr, updateRequest)
+	if err != nil {
+		return newErrorResult("Failed to update OAuth client: " + err.Error())
+	}
+
+	return newSuccessJSONResult(client)
+}
+
+//export delete_oauth_client
+func delete_oauth_client(clientID *C.char) C.FFIResult {
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+		}
+	}()
+
+	plugin := GetRegisteredPlugin()
+	if plugin == nil {
+		return newErrorResult("No plugin registered")
+	}
+
+	if clientID == nil {
+		return newErrorResult("clientID cannot be null")
+	}
+
+	clientIDStr := goString(clientID)
+	err := plugin.DeleteOAuthClient(clientIDStr)
+	if err != nil {
+		return newErrorResult("Failed to delete OAuth client: " + err.Error())
+	}
+
+	return newSuccessEmptyResult()
+}
+
+//export list_oauth_clients
+func list_oauth_clients(limit, offset C.int) C.FFIResult {
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+		}
+	}()
+
+	plugin := GetRegisteredPlugin()
+	if plugin == nil {
+		return newErrorResult("No plugin registered")
+	}
+
+	var limitPtr, offsetPtr *int
+	if limit >= 0 {
+		limitInt := int(limit)
+		limitPtr = &limitInt
+	}
+	if offset >= 0 {
+		offsetInt := int(offset)
+		offsetPtr = &offsetInt
+	}
+
+	clients, err := plugin.ListOAuthClients(limitPtr, offsetPtr)
+	if err != nil {
+		return newErrorResult("Failed to list OAuth clients: " + err.Error())
+	}
+
+	return newSuccessJSONResult(clients)
+}
+
+//export list_user_authorized_clients
+func list_user_authorized_clients(userID *C.char) C.FFIResult {
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+		}
+	}()
+
+	plugin := GetRegisteredPlugin()
+	if plugin == nil {
+		return newErrorResult("No plugin registered")
+	}
+
+	if userID == nil {
+		return newErrorResult("userID cannot be null")
+	}
+
+	userIDStr := goString(userID)
+	clients, err := plugin.ListUserAuthorizedClients(userIDStr)
+	if err != nil {
+		return newErrorResult("Failed to list user authorized clients: " + err.Error())
+	}
+
+	return newSuccessJSONResult(clients)
+}
+
+//export revoke_user_client_authorization
+func revoke_user_client_authorization(userID, clientID *C.char) C.FFIResult {
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+		}
+	}()
+
+	plugin := GetRegisteredPlugin()
+	if plugin == nil {
+		return newErrorResult("No plugin registered")
+	}
+
+	if userID == nil || clientID == nil {
+		return newErrorResult("userID and clientID cannot be null")
+	}
+
+	userIDStr := goString(userID)
+	clientIDStr := goString(clientID)
+	err := plugin.RevokeUserClientAuthorization(userIDStr, clientIDStr)
+	if err != nil {
+		return newErrorResult("Failed to revoke user client authorization: " + err.Error())
+	}
+
+	return newSuccessEmptyResult()
 }
 
 // Force GC to run periodically

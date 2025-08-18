@@ -7,11 +7,14 @@ type AuthPlugin interface {
 	// CheckUserAccess checks if a user has permission to perform an action on a resource
 	CheckUserAccess(userID, resource, action string) (bool, error)
 
-	// CreateUser retrieves detailed permissions for a user
-	CreateUser(userID string) (*types.UserPermissions, error)
+	// CreateUser creates a user in the auth provider
+	CreateUser(request types.CreateUserRequest) (*types.CreateUserResult, error)
 
 	// GetUserDetails retrieves user profile/details information
 	GetUserDetails(userID string) (*types.UserDetails, error)
+
+	// GetUserDetailsByEmail retrieves user profile/details information by email
+	GetUserDetailsByEmail(email string) (*types.UserDetails, error)
 
 	// GetPluginInfo returns plugin information and capabilities
 	GetPluginInfo() (*types.AuthPluginInfo, error)
@@ -34,6 +37,32 @@ type AuthPlugin interface {
 	// SearchUsers searches for users matching a query (optional, can return empty slice)
 	SearchUsers(query string, limit int) ([]*types.UserDetails, error)
 
+	// DeleteUser deletes a user from the authentication system
+	DeleteUser(userID string) error
+
+	// OAuth Client Management (Required)
+	// CreateOAuthClient creates an OAuth client/application
+	CreateOAuthClient(request types.CreateOAuthClientRequest) (*types.OAuthClient, error)
+
+	// GetOAuthClient retrieves an OAuth client by client ID
+	GetOAuthClient(clientID string) (*types.OAuthClient, error)
+
+	// UpdateOAuthClient updates an OAuth client
+	UpdateOAuthClient(clientID string, request types.UpdateOAuthClientRequest) (*types.OAuthClient, error)
+
+	// DeleteOAuthClient deletes an OAuth client
+	DeleteOAuthClient(clientID string) error
+
+	// ListOAuthClients lists OAuth clients with pagination
+	ListOAuthClients(limit, offset *int) ([]*types.OAuthClient, error)
+
+	// User Authorization Management (Required)
+	// ListUserAuthorizedClients lists clients authorized by a user
+	ListUserAuthorizedClients(userID string) ([]*types.UserAuthorizedClient, error)
+
+	// RevokeUserClientAuthorization revokes user authorization for a specific client
+	RevokeUserClientAuthorization(userID, clientID string) error
+
 	// Cleanup performs any necessary cleanup when the plugin is being unloaded
 	// This is optional - plugins can implement this to clean up resources
 	Cleanup() error
@@ -46,8 +75,27 @@ type AuthPluginWithContext interface {
 	// CheckUserAccessWithContext checks user access with additional context
 	CheckUserAccessWithContext(userID, resource, action string, context *AuthContext) (bool, error)
 
-	// CreateUserWithContext gets user permissions with additional context
-	CreateUserWithContext(userID string, context *AuthContext) (*types.UserPermissions, error)
+	// CreateUserWithContext creates user with additional context
+	CreateUserWithContext(request types.CreateUserRequest, context *AuthContext) (*types.CreateUserResult, error)
+
+	// GetUserDetailsByEmailWithContext retrieves user details by email with additional context
+	GetUserDetailsByEmailWithContext(email string, context *AuthContext) (*types.UserDetails, error)
+
+	// DeleteUserWithContext deletes a user with additional context
+	DeleteUserWithContext(userID string, context *AuthContext) error
+
+	// OAuth Client Management with context
+	// CreateOAuthClientWithContext creates OAuth client with additional context
+	CreateOAuthClientWithContext(request types.CreateOAuthClientRequest, context *AuthContext) (*types.OAuthClient, error)
+
+	// UpdateOAuthClientWithContext updates OAuth client with additional context
+	UpdateOAuthClientWithContext(clientID string, request types.UpdateOAuthClientRequest, context *AuthContext) (*types.OAuthClient, error)
+
+	// DeleteOAuthClientWithContext deletes OAuth client with additional context
+	DeleteOAuthClientWithContext(clientID string, context *AuthContext) error
+
+	// RevokeUserClientAuthorizationWithContext revokes user client authorization with additional context
+	RevokeUserClientAuthorizationWithContext(userID, clientID string, context *AuthContext) error
 }
 
 // AuthContext provides additional context for authentication operations

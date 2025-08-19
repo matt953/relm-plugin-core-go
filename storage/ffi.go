@@ -12,15 +12,41 @@ typedef struct {
     size_t data_len;
     char* error_msg;
 } FFIResult;
+
+typedef void (*progress_callback_t)(double progress, void* user_data);
+
+static inline void call_progress_callback(uintptr_t callback, double progress, void* user_data) {
+    if (callback != 0) {
+        ((progress_callback_t)callback)(progress, user_data);
+    }
+}
 */
 import "C"
 import (
 	"runtime"
 	"runtime/debug"
+	"sync"
 	"unsafe"
 	
 	"github.com/matt953/relm-plugin-core-go/config"
 )
+
+// Global variable to store progress callback
+var (
+	currentProgressCallback func(float64)
+	progressMutex          sync.Mutex
+)
+
+// ReportProgress is exported for plugins to use
+// It reports upload progress from 0.0 to 1.0
+func ReportProgress(progress float64) {
+	progressMutex.Lock()
+	defer progressMutex.Unlock()
+	
+	if currentProgressCallback != nil {
+		currentProgressCallback(progress)
+	}
+}
 
 
 // Helper functions for C interop
@@ -95,7 +121,14 @@ func newErrorResult(errorMsg string) C.FFIResult {
 // FFI export functions that will be called from Rust
 
 //export store_file_with_content_type
-func store_file_with_content_type(path *C.char, data *C.uint8_t, length C.size_t, contentType *C.char) C.FFIResult {
+func store_file_with_content_type(
+	path *C.char,
+	data *C.uint8_t,
+	length C.size_t,
+	contentType *C.char,
+	progressCallback C.uintptr_t,
+	userData unsafe.Pointer,
+) C.FFIResult {
 	plugin := GetRegisteredPlugin()
 	if plugin == nil {
 		return newErrorResult("No plugin registered")
@@ -110,6 +143,21 @@ func store_file_with_content_type(path *C.char, data *C.uint8_t, length C.size_t
 		goContentType = &ct
 	}
 
+	// Set up progress callback if provided
+	if progressCallback != 0 {
+		progressMutex.Lock()
+		currentProgressCallback = func(progress float64) {
+			C.call_progress_callback(C.uintptr_t(progressCallback), C.double(progress), userData)
+		}
+		progressMutex.Unlock()
+		
+		defer func() {
+			progressMutex.Lock()
+			currentProgressCallback = nil
+			progressMutex.Unlock()
+		}()
+	}
+
 	err := plugin.StoreFile(goPath, goData, goContentType)
 	if err != nil {
 		return newErrorResult(err.Error())
@@ -118,10 +166,6 @@ func store_file_with_content_type(path *C.char, data *C.uint8_t, length C.size_t
 	return newSuccessEmpty()
 }
 
-//export store_file
-func store_file(path *C.char, data *C.uint8_t, length C.size_t) C.FFIResult {
-	return store_file_with_content_type(path, data, length, nil)
-}
 
 //export retrieve_file
 func retrieve_file(path *C.char) C.FFIResult {
